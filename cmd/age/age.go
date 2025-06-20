@@ -149,7 +149,7 @@ func main() {
 		}
 		fmt.Println("(unknown)")
 		return
-	}
+	} 
 
 	if flag.NArg() > 1 {
 		var hints []string
@@ -332,6 +332,13 @@ func passphrasePromptForEncryption() (string, error) {
 	return p, nil
 }
 
+func passphraseStdinForEncrypt() (string, error) {
+	b, err := io.ReadAll(os.Stdin)
+	b = bytes.TrimRight(b, "\n")
+	return string(b), err
+}
+
+
 func encryptNotPass(recs, files []string, identities identityFlags, in io.Reader, out io.Writer, armor bool) {
 	var recipients []age.Recipient
 	for _, arg := range recs {
@@ -377,7 +384,16 @@ func encryptNotPass(recs, files []string, identities identityFlags, in io.Reader
 }
 
 func encryptPass(in io.Reader, out io.Writer, armor bool) {
-	pass, err := passphrasePromptForEncryption()
+
+	var pass string
+	var err error
+
+	if in != os.Stdin && !term.IsTerminal(int(os.Stdin.Fd())) {
+		pass, err = passphraseStdinForEncrypt()
+  	} else {
+		pass, err = passphrasePromptForEncryption()
+	}
+	
 	if err != nil {
 		errorf("%v", err)
 	}
@@ -455,10 +471,20 @@ func decryptNotPass(flags identityFlags, in io.Reader, out io.Writer) {
 }
 
 func decryptPass(in io.Reader, out io.Writer) {
+	passphrase := passphrasePromptForDecryption
+
+	if in != os.Stdin && !term.IsTerminal(int(os.Stdin.Fd())) {
+		passphrase = func() (string, error) {
+			b, err := io.ReadAll(os.Stdin)
+			b = bytes.TrimRight(b, "\n")
+			return string(b), err
+		}
+	}
+
 	identities := []age.Identity{
 		// If there is an scrypt recipient (it will have to be the only one and)
 		// this identity will be invoked.
-		&LazyScryptIdentity{passphrasePromptForDecryption},
+		&LazyScryptIdentity{passphrase},
 	}
 
 	decrypt(identities, in, out)
