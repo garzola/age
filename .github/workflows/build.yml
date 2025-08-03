@@ -2,4 +2,19 @@
 #
 #
 # docker image:  golang:1.24-alpine3.22
+# docker run -it --rm -v .:/go/src golang:1.24-alpine3.22 ash
+name: build
+run-name: ${{ github.actor }}@${{ github.ref }}
 
+on:
+    push
+
+env:
+  GOLANG_VERSION: 1.24.0
+  CGO_ENABLED: 0
+  GOOS: linux
+  GOARCH: arm64
+
+jobs:
+    build:
+        name: build
