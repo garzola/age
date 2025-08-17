@@ -388,7 +388,7 @@ func encryptPass(in io.Reader, out io.Writer, armor bool) {
 	var pass string
 	var err error
 
-	if in != os.Stdin && !term.IsTerminal(int(os.Stdin.Fd())) {
+	if in != os.Stdin {
 		pass, err = passphraseStdinForEncrypt()
   	} else {
 		pass, err = passphrasePromptForEncryption()
@@ -473,7 +473,7 @@ func decryptNotPass(flags identityFlags, in io.Reader, out io.Writer) {
 func decryptPass(in io.Reader, out io.Writer) {
 	passphrase := passphrasePromptForDecryption
 
-	if in != os.Stdin && !term.IsTerminal(int(os.Stdin.Fd())) {
+	if in != os.Stdin {
 		passphrase = func() (string, error) {
 			b, err := io.ReadAll(os.Stdin)
 			b = bytes.TrimRight(b, "\n")
